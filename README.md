@@ -1,4 +1,4 @@
-# qwen-vs-opus
+# qwen3.8-27b-vs-opus-4.6
 
 An empirical head-to-head between a local open-weight model and a frontier
 cloud model on realistic agentic coding tasks, run with the same harness, the
