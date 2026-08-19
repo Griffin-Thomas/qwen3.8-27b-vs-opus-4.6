@@ -16,8 +16,28 @@ git init -q && git add -A && git commit -qm baseline
 PROMPT="$(cat "$ROOT/tasks/$TASK/prompt.txt")"
 START="$(date +%s)"
 if [ "$MODEL" = "qwen" ]; then
-  /Users/griffin/AI/qwen3.8-27b/qwen local --dangerously-skip-permissions \
-    -p "$PROMPT" --output-format json > agent-output.json 2> agent-stderr.log
+  # Local model runs need an Anthropic-Messages-compatible server already
+  # serving the model (e.g. mlx-dspark). Point these at yours:
+  #   LOCAL_BASE_URL   default http://127.0.0.1:8080
+  #   LOCAL_MODEL_ID   default Qwen3.8-27B-8bit (must match /v1/models)
+  # Or set LOCAL_LAUNCHER to a command that wraps claude with your own
+  # launcher (the recorded runs used a strict-local wrapper equivalent to
+  # the env-based invocation below, plus offline-irrelevant web-tool config).
+  if [ -n "${LOCAL_LAUNCHER:-}" ]; then
+    $LOCAL_LAUNCHER --dangerously-skip-permissions \
+      -p "$PROMPT" --output-format json > agent-output.json 2> agent-stderr.log
+  else
+    LOCAL_BASE_URL="${LOCAL_BASE_URL:-http://127.0.0.1:8080}"
+    LOCAL_MODEL_ID="${LOCAL_MODEL_ID:-Qwen3.8-27B-8bit}"
+    env -u ANTHROPIC_API_KEY \
+      ANTHROPIC_BASE_URL="$LOCAL_BASE_URL" \
+      ANTHROPIC_AUTH_TOKEN="local-only" \
+      ANTHROPIC_MODEL="$LOCAL_MODEL_ID" \
+      ANTHROPIC_SMALL_FAST_MODEL="$LOCAL_MODEL_ID" \
+      CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="0" \
+      claude --model "$LOCAL_MODEL_ID" --dangerously-skip-permissions \
+      -p "$PROMPT" --output-format json > agent-output.json 2> agent-stderr.log
+  fi
 elif [ "$MODEL" = "opus-max" ]; then
   env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL -u ANTHROPIC_MODEL \
     claude --model claude-opus-4-6 --effort max --dangerously-skip-permissions \

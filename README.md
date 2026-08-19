@@ -72,10 +72,26 @@ left it, wall-clock seconds, the agent's own usage report, and the diff.
 
 ## Reproduce
 
+Requirements: the Claude Code CLI (`claude`), a Claude subscription or API
+access for the Opus arm, and for the local arm any server exposing the
+Anthropic Messages API for your local model (this experiment used
+[mlx-dspark](https://github.com/ARahim3/mlx-dspark) serving Qwen3.8-27B-8bit
+on loopback).
+
 ```bash
-./run.sh ratelimiter qwen       # or: retry, todo-cli
+# Local arm — point at your server first:
+LOCAL_BASE_URL=http://127.0.0.1:8080 LOCAL_MODEL_ID=Qwen3.8-27B-8bit \
+  ./run.sh ratelimiter qwen     # or: retry, todo-cli
+
+# Cloud arm:
 ./run.sh ratelimiter opus-max
 ```
+
+The recorded runs drove the local model through a strict-local launcher
+equivalent to run.sh's env-based invocation (same base URL, model mapping,
+and placeholder token), plus web-tool configuration that is irrelevant to
+these offline tasks. Wall-clock numbers are machine-dependent; ours came
+from an M5 Pro with 307 GB/s memory bandwidth.
 
 `runs/` is gitignored (working trees); graded evidence lands in `results/`.
 
