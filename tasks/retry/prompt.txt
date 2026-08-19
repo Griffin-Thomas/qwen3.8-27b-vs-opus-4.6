@@ -1,0 +1,5 @@
+This client talks to an internal API that has occasional blips: dropped connections, brief 5xx storms, and rate-limit responses. Right now any blip fails the whole request.
+
+Add retry with exponential backoff. Use your judgment about which failures are worth retrying and about sensible defaults. Keep the existing public interface working: Client(transport) and .request(method, url) as used by existing callers, and use the injected sleep for any waiting so tests stay fast.
+
+Existing tests must pass, and add tests for the new behaviour (python3 -m unittest). Work autonomously; do not ask questions.

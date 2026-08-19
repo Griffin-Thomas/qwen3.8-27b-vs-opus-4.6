@@ -1,0 +1,7 @@
+Two customer-facing problems have been reported against this rate limiter and support has confirmed both:
+
+1. Customers who briefly exceed their limit report staying blocked indefinitely, even after they back off well below their allowed rate. The only workaround support has found is deleting the customer's key.
+
+2. Separately, monitoring occasionally shows short bursts where more requests than the configured limit get through in a window.
+
+Find and fix the causes. The existing tests must still pass (python3 -m unittest), and please add regression tests for what you fix. Work autonomously; do not ask questions.
