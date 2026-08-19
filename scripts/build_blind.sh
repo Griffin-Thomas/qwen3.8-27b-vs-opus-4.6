@@ -17,7 +17,10 @@ full_diff() {
   git -C "$1" add -A -- \
     ':!agent-output.json' ':!agent-stderr.log' ':!wall-seconds.txt' \
     ':!agent-exit-status.txt' ':!visible-tests.log' ':!holdout.log' \
-    ':!diff-stat.txt' ':!todo.json' ':!*.log' >/dev/null 2>&1
+    ':!diff-stat.txt' ':!todo.json' ':!*.log' \
+    ':!__pycache__' ':!*.pyc' >/dev/null 2>&1
+  # The committed results/blind/ package predates the __pycache__ exclusion
+  # and is kept byte-identical to what the blinded reviewer saw.
   git -C "$1" diff --cached HEAD
 }
 

@@ -1,0 +1,90 @@
+diff --git a/__pycache__/limiter.cpython-314.pyc b/__pycache__/limiter.cpython-314.pyc
+new file mode 100644
+index 0000000..b9b6d46
+Binary files /dev/null and b/__pycache__/limiter.cpython-314.pyc differ
+diff --git a/__pycache__/test_holdout_limiter.cpython-314.pyc b/__pycache__/test_holdout_limiter.cpython-314.pyc
+new file mode 100644
+index 0000000..4a62aab
+Binary files /dev/null and b/__pycache__/test_holdout_limiter.cpython-314.pyc differ
+diff --git a/__pycache__/test_limiter.cpython-314.pyc b/__pycache__/test_limiter.cpython-314.pyc
+new file mode 100644
+index 0000000..e9c95d1
+Binary files /dev/null and b/__pycache__/test_limiter.cpython-314.pyc differ
+diff --git a/limiter.py b/limiter.py
+index 0c974ea..13261db 100644
+--- a/limiter.py
++++ b/limiter.py
+@@ -22,13 +22,14 @@ class SlidingWindowLimiter:
+ 
+     def allow(self, key):
+         """Record an attempt for `key` and return whether it is allowed."""
+-        now = int(self.clock())
++        now = self.clock()
+         hits = self._hits.setdefault(key, [])
+         cutoff = now - self.window
+         while hits and hits[0] <= cutoff:
+             hits.pop(0)
+         allowed = len(hits) < self.limit
+-        hits.append(now)
++        if allowed:
++            hits.append(now)
+         return allowed
+ 
+     def reset(self, key):
+diff --git a/test_limiter.py b/test_limiter.py
+index e898e5e..c41a559 100644
+--- a/test_limiter.py
++++ b/test_limiter.py
+@@ -42,5 +42,52 @@ class TestSlidingWindowLimiter(unittest.TestCase):
+         self.assertTrue(limiter.allow("alice"))
+ 
+ 
++    def test_denied_requests_do_not_extend_blocking(self):
++        """Customers who back off after exceeding the limit must recover."""
++        clock = FakeClock()
++        limiter = SlidingWindowLimiter(limit=3, window=60, clock=clock)
++
++        for _ in range(3):
++            self.assertTrue(limiter.allow("alice"))
++
++        # Exceed the limit with several denied attempts.
++        for _ in range(10):
++            clock.advance(1)
++            self.assertFalse(limiter.allow("alice"))
++
++        # After the full window elapses past the last *allowed* request,
++        # the customer must be unblocked.
++        clock.advance(60)
++        self.assertTrue(limiter.allow("alice"))
++
++    def test_no_burst_across_subsecond_boundary(self):
++        """Subsecond timing must not allow more than limit in a window."""
++        clock = FakeClock(start=1000.0)
++        limiter = SlidingWindowLimiter(limit=5, window=10, clock=clock)
++
++        # Fill the limit right before a whole-second boundary.
++        clock.now = 1000.99
++        for _ in range(5):
++            self.assertTrue(limiter.allow("alice"))
++
++        # Just past the boundary, only ~9 real seconds later — all 5 must
++        # still be in the window.
++        clock.now = 1010.01
++        self.assertFalse(limiter.allow("alice"))
++
++    def test_recovery_after_full_window(self):
++        """A blocked customer regains full capacity once the window passes."""
++        clock = FakeClock()
++        limiter = SlidingWindowLimiter(limit=2, window=30, clock=clock)
++
++        self.assertTrue(limiter.allow("alice"))
++        self.assertTrue(limiter.allow("alice"))
++        self.assertFalse(limiter.allow("alice"))
++
++        clock.advance(31)
++        self.assertTrue(limiter.allow("alice"))
++        self.assertTrue(limiter.allow("alice"))
++
++
+ if __name__ == "__main__":
+     unittest.main()

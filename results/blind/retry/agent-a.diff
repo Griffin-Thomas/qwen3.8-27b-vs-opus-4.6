@@ -1,0 +1,141 @@
+diff --git a/__pycache__/client.cpython-314.pyc b/__pycache__/client.cpython-314.pyc
+new file mode 100644
+index 0000000..7296678
+Binary files /dev/null and b/__pycache__/client.cpython-314.pyc differ
+diff --git a/__pycache__/test_client.cpython-314.pyc b/__pycache__/test_client.cpython-314.pyc
+new file mode 100644
+index 0000000..6884295
+Binary files /dev/null and b/__pycache__/test_client.cpython-314.pyc differ
+diff --git a/__pycache__/test_holdout_retry.cpython-314.pyc b/__pycache__/test_holdout_retry.cpython-314.pyc
+new file mode 100644
+index 0000000..43afb9b
+Binary files /dev/null and b/__pycache__/test_holdout_retry.cpython-314.pyc differ
+diff --git a/client.py b/client.py
+index 714c6fe..73e8eb9 100644
+--- a/client.py
++++ b/client.py
+@@ -24,12 +24,29 @@ class Client:
+     for testing.
+     """
+ 
+-    def __init__(self, transport, sleep=time.sleep):
++    def __init__(self, transport, sleep=time.sleep, retries=3, base_delay=1):
+         self.transport = transport
+         self.sleep = sleep
++        self.retries = retries
++        self.base_delay = base_delay
+ 
+     def request(self, method, url):
+-        response = self.transport.send(method, url)
+-        if response.status >= 400:
+-            raise HTTPError(response.status, response.body)
+-        return response
++        last_exception = None
++        for attempt in range(self.retries + 1):
++            try:
++                response = self.transport.send(method, url)
++            except ConnectionError as exc:
++                last_exception = exc
++                if attempt < self.retries:
++                    self.sleep(self.base_delay * (2 ** attempt))
++                    continue
++                raise
++            if response.status == 429 or response.status >= 500:
++                last_exception = HTTPError(response.status, response.body)
++                if attempt < self.retries:
++                    self.sleep(self.base_delay * (2 ** attempt))
++                    continue
++                raise last_exception
++            if response.status >= 400:
++                raise HTTPError(response.status, response.body)
++            return response
+diff --git a/test_client.py b/test_client.py
+index 3d26e5b..9a091fa 100644
+--- a/test_client.py
++++ b/test_client.py
+@@ -40,5 +40,85 @@ class TestClient(unittest.TestCase):
+             client.request("GET", "/things")
+ 
+ 
++class TestRetry(unittest.TestCase):
++    def _make_client(self, script, **kwargs):
++        transport = ScriptedTransport(script)
++        delays = []
++        client = Client(transport, sleep=delays.append, **kwargs)
++        return client, transport, delays
++
++    def test_retries_connection_error_then_succeeds(self):
++        client, transport, delays = self._make_client([
++            ConnectionError("reset"), Response(200, "ok"),
++        ])
++        resp = client.request("GET", "/things")
++        self.assertEqual(resp.status, 200)
++        self.assertEqual(len(transport.sends), 2)
++        self.assertEqual(delays, [1])
++
++    def test_retries_503_then_succeeds(self):
++        client, transport, delays = self._make_client([
++            Response(503, "unavailable"), Response(200, "ok"),
++        ])
++        resp = client.request("GET", "/things")
++        self.assertEqual(resp.status, 200)
++        self.assertEqual(len(transport.sends), 2)
++
++    def test_retries_429_then_succeeds(self):
++        client, transport, delays = self._make_client([
++            Response(429, "slow down"), Response(200, "ok"),
++        ])
++        resp = client.request("GET", "/things")
++        self.assertEqual(resp.status, 200)
++        self.assertEqual(len(transport.sends), 2)
++
++    def test_does_not_retry_4xx(self):
++        client, transport, delays = self._make_client([
++            Response(400, "bad request"), Response(200, "ok"),
++        ])
++        with self.assertRaises(HTTPError) as ctx:
++            client.request("POST", "/things")
++        self.assertEqual(ctx.exception.status, 400)
++        self.assertEqual(len(transport.sends), 1)
++        self.assertEqual(delays, [])
++
++    def test_exponential_backoff_delays(self):
++        client, transport, delays = self._make_client([
++            ConnectionError("reset"),
++            ConnectionError("reset"),
++            ConnectionError("reset"),
++            Response(200, "ok"),
++        ])
++        resp = client.request("GET", "/things")
++        self.assertEqual(resp.status, 200)
++        self.assertEqual(delays, [1, 2, 4])
++
++    def test_exhausts_retries_on_connection_error(self):
++        client, transport, delays = self._make_client([
++            ConnectionError("reset"),
++        ])
++        with self.assertRaises(ConnectionError):
++            client.request("GET", "/things")
++        self.assertEqual(len(transport.sends), 4)
++
++    def test_exhausts_retries_on_server_error(self):
++        client, transport, delays = self._make_client([
++            Response(502, "bad gateway"),
++        ])
++        with self.assertRaises(HTTPError) as ctx:
++            client.request("GET", "/things")
++        self.assertEqual(ctx.exception.status, 502)
++        self.assertEqual(len(transport.sends), 4)
++
++    def test_custom_retries_and_base_delay(self):
++        client, transport, delays = self._make_client(
++            [ConnectionError("reset"), Response(200, "ok")],
++            retries=1, base_delay=5,
++        )
++        resp = client.request("GET", "/things")
++        self.assertEqual(resp.status, 200)
++        self.assertEqual(delays, [5])
++
++
+ if __name__ == "__main__":
+     unittest.main()

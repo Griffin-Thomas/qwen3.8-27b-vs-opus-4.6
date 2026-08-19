@@ -1,0 +1,5 @@
+{
+  "ratelimiter": {"agent-a": "opus-max", "agent-b": "qwen"},
+  "retry": {"agent-a": "opus-max", "agent-b": "qwen"},
+  "todo-cli": {"agent-a": "qwen", "agent-b": "opus-max"}
+}

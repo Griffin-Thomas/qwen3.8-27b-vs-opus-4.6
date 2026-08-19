@@ -1,0 +1,230 @@
+{
+  "ratelimiter-qwen": {
+    "holdout_passed": 4,
+    "holdout_total": 4,
+    "visible_tests_ok": true,
+    "wall_seconds": 2913,
+    "num_turns": 16,
+    "duration_api_ms": 2910322,
+    "usage": {
+      "input_tokens": 336135,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "output_tokens": 35917,
+      "output_tokens_details": {
+        "thinking_tokens": 0
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [],
+      "speed": "standard"
+    },
+    "total_cost_usd": 2.5786000000000002,
+    "is_error": false,
+    "diff_stat": "limiter.py      |  5 +++--\n test_limiter.py | 42 ++++++++++++++++++++++++++++++++++++++++++\n 2 files changed, 45 insertions(+), 2 deletions(-)\n M limiter.py\n M test_limiter.py\n?? __pycache__/\n?? agent-exit-status.txt\n?? agent-output.json\n?? agent-stderr.log\n?? diff-stat.txt\n?? holdout.log\n?? visible-tests.log\n?? wall-seconds.txt"
+  },
+  "ratelimiter-opus-max": {
+    "holdout_passed": 4,
+    "holdout_total": 4,
+    "visible_tests_ok": false,
+    "wall_seconds": 228,
+    "num_turns": 8,
+    "duration_api_ms": 224995,
+    "usage": {
+      "input_tokens": 6,
+      "cache_creation_input_tokens": 13480,
+      "cache_read_input_tokens": 211386,
+      "output_tokens": 9384,
+      "output_tokens_details": {
+        "thinking_tokens": 7586
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 13480,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 280,
+          "cache_read_input_tokens": 40991,
+          "cache_creation_input_tokens": 598,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 598
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "total_cost_usd": 0.760657,
+    "is_error": false,
+    "diff_stat": "limiter.py      |  5 +++--\n test_limiter.py | 47 +++++++++++++++++++++++++++++++++++++++++++++++\n 2 files changed, 50 insertions(+), 2 deletions(-)\n M limiter.py\n M test_limiter.py\n?? __pycache__/\n?? agent-exit-status.txt\n?? agent-output.json\n?? agent-stderr.log\n?? diff-stat.txt\n?? holdout.log\n?? visible-tests.log\n?? wall-seconds.txt"
+  },
+  "retry-qwen": {
+    "holdout_passed": 6,
+    "holdout_total": 6,
+    "visible_tests_ok": false,
+    "wall_seconds": 400,
+    "num_turns": 9,
+    "duration_api_ms": 398196,
+    "usage": {
+      "input_tokens": 190788,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "output_tokens": 4444,
+      "output_tokens_details": {
+        "thinking_tokens": 0
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [],
+      "speed": "standard"
+    },
+    "total_cost_usd": 1.06504,
+    "is_error": false,
+    "diff_stat": "client.py      | 35 +++++++++++++++++++++++---\n test_client.py | 77 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n 2 files changed, 108 insertions(+), 4 deletions(-)\n M client.py\n M test_client.py\n?? __pycache__/\n?? agent-exit-status.txt\n?? agent-output.json\n?? agent-stderr.log\n?? diff-stat.txt\n?? holdout.log\n?? visible-tests.log\n?? wall-seconds.txt"
+  },
+  "retry-opus-max": {
+    "holdout_passed": 6,
+    "holdout_total": 6,
+    "visible_tests_ok": false,
+    "wall_seconds": 54,
+    "num_turns": 8,
+    "duration_api_ms": 51173,
+    "usage": {
+      "input_tokens": 9,
+      "cache_creation_input_tokens": 15830,
+      "cache_read_input_tokens": 206988,
+      "output_tokens": 2488,
+      "output_tokens_details": {
+        "thinking_tokens": 312
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 15830,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 114,
+          "cache_read_input_tokens": 33819,
+          "cache_creation_input_tokens": 589,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 589
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "total_cost_usd": 0.32514000000000004,
+    "is_error": false,
+    "diff_stat": "client.py      | 27 ++++++++++++++++----\n test_client.py | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n 2 files changed, 102 insertions(+), 5 deletions(-)\n M client.py\n M test_client.py\n?? __pycache__/\n?? agent-exit-status.txt\n?? agent-output.json\n?? agent-stderr.log\n?? diff-stat.txt\n?? holdout.log\n?? visible-tests.log\n?? wall-seconds.txt"
+  },
+  "todo-cli-qwen": {
+    "holdout_passed": 4,
+    "holdout_total": 4,
+    "visible_tests_ok": false,
+    "wall_seconds": 487,
+    "num_turns": 18,
+    "duration_api_ms": 481162,
+    "usage": {
+      "input_tokens": 408001,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "output_tokens": 4850,
+      "output_tokens_details": {
+        "thinking_tokens": 0
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [],
+      "speed": "standard"
+    },
+    "total_cost_usd": 2.1612549999999997,
+    "is_error": false,
+    "diff_stat": "storage.py   | 10 ++++++++--\n test_todo.py | 25 +++++++++++++++++++++++++\n 2 files changed, 33 insertions(+), 2 deletions(-)\n M storage.py\n M test_todo.py\n?? __pycache__/\n?? agent-exit-status.txt\n?? agent-output.json\n?? agent-stderr.log\n?? diff-stat.txt\n?? holdout.log\n?? visible-tests.log\n?? wall-seconds.txt"
+  },
+  "todo-cli-opus-max": {
+    "holdout_passed": 4,
+    "holdout_total": 4,
+    "visible_tests_ok": false,
+    "wall_seconds": 43,
+    "num_turns": 11,
+    "duration_api_ms": 40788,
+    "usage": {
+      "input_tokens": 8,
+      "cache_creation_input_tokens": 16634,
+      "cache_read_input_tokens": 179159,
+      "output_tokens": 2292,
+      "output_tokens_details": {
+        "thinking_tokens": 317
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 16634,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 204,
+          "cache_read_input_tokens": 34723,
+          "cache_creation_input_tokens": 489,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 489
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "total_cost_usd": 0.3143535,
+    "is_error": false,
+    "diff_stat": "storage.py   |  7 +++++--\n test_todo.py | 33 +++++++++++++++++++++++++++++++++\n 2 files changed, 38 insertions(+), 2 deletions(-)\n M storage.py\n M test_todo.py\n?? __pycache__/\n?? agent-exit-status.txt\n?? agent-output.json\n?? agent-stderr.log\n?? diff-stat.txt\n?? holdout.log\n?? visible-tests.log\n?? wall-seconds.txt"
+  }
+}

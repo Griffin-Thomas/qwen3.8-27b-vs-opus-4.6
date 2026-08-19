@@ -1,0 +1,155 @@
+diff --git a/__pycache__/client.cpython-314.pyc b/__pycache__/client.cpython-314.pyc
+new file mode 100644
+index 0000000..fd0e8d5
+Binary files /dev/null and b/__pycache__/client.cpython-314.pyc differ
+diff --git a/__pycache__/test_client.cpython-314.pyc b/__pycache__/test_client.cpython-314.pyc
+new file mode 100644
+index 0000000..e194a0b
+Binary files /dev/null and b/__pycache__/test_client.cpython-314.pyc differ
+diff --git a/__pycache__/test_holdout_retry.cpython-314.pyc b/__pycache__/test_holdout_retry.cpython-314.pyc
+new file mode 100644
+index 0000000..f4a9d5e
+Binary files /dev/null and b/__pycache__/test_holdout_retry.cpython-314.pyc differ
+diff --git a/client.py b/client.py
+index 714c6fe..41bfc1b 100644
+--- a/client.py
++++ b/client.py
+@@ -16,12 +16,24 @@ class Response:
+         self.body = body
+ 
+ 
++# Statuses that are worth retrying: rate limits and server-side faults.
++# 501 (Not Implemented) is deliberately excluded, as are all other 4xx.
++_RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
++_MAX_ATTEMPTS = 4
++_INITIAL_DELAY = 0.5
++_MAX_DELAY = 8.0
++
++
+ class Client:
+     """Issues requests through a transport.
+ 
+     `transport.send(method, url)` returns a Response or raises
+     ConnectionError for network-level failures. `sleep` is injectable
+     for testing.
++
++    Transient failures (ConnectionError, HTTP 429/5xx) are retried up to
++    _MAX_ATTEMPTS times with exponential backoff: 0.5s, 1s, 2s, capped
++    at _MAX_DELAY. Non-retryable failures raise immediately.
+     """
+ 
+     def __init__(self, transport, sleep=time.sleep):
+@@ -29,7 +41,22 @@ class Client:
+         self.sleep = sleep
+ 
+     def request(self, method, url):
+-        response = self.transport.send(method, url)
+-        if response.status >= 400:
+-            raise HTTPError(response.status, response.body)
+-        return response
++        delay = _INITIAL_DELAY
++        last_failure = None
++        for attempt in range(_MAX_ATTEMPTS):
++            try:
++                response = self.transport.send(method, url)
++            except ConnectionError as exc:
++                last_failure = exc
++            else:
++                if response.status in _RETRYABLE_STATUSES:
++                    last_failure = HTTPError(response.status, response.body)
++                elif response.status >= 400:
++                    raise HTTPError(response.status, response.body)
++                else:
++                    return response
++
++            if attempt == _MAX_ATTEMPTS - 1:
++                raise last_failure
++            self.sleep(delay)
++            delay = min(delay * 2, _MAX_DELAY)
+diff --git a/test_client.py b/test_client.py
+index 3d26e5b..c5d2f56 100644
+--- a/test_client.py
++++ b/test_client.py
+@@ -40,5 +40,82 @@ class TestClient(unittest.TestCase):
+             client.request("GET", "/things")
+ 
+ 
++class TestRetry(unittest.TestCase):
++    def make_client(self, transport):
++        self.delays = []
++        return Client(transport, sleep=self.delays.append)
++
++    def test_connection_error_retried_then_succeeds(self):
++        transport = ScriptedTransport([
++            ConnectionError("dropped"),
++            Response(200, "ok"),
++        ])
++        client = self.make_client(transport)
++        response = client.request("GET", "/things")
++        self.assertEqual(response.status, 200)
++        self.assertEqual(len(transport.sends), 2)
++        self.assertEqual(self.delays, [0.5])
++
++    def test_503_storm_retried_then_succeeds(self):
++        transport = ScriptedTransport([
++            Response(503, "unavailable"),
++            Response(503, "unavailable"),
++            Response(200, "ok"),
++        ])
++        client = self.make_client(transport)
++        response = client.request("GET", "/things")
++        self.assertEqual(response.status, 200)
++        self.assertEqual(self.delays, [0.5, 1.0])
++
++    def test_429_retried_then_succeeds(self):
++        transport = ScriptedTransport([
++            Response(429, "slow down"),
++            Response(200, "ok"),
++        ])
++        client = self.make_client(transport)
++        response = client.request("GET", "/things")
++        self.assertEqual(response.status, 200)
++        self.assertEqual(len(transport.sends), 2)
++
++    def test_exponential_backoff_delays(self):
++        transport = ScriptedTransport([ConnectionError("dropped")])
++        client = self.make_client(transport)
++        with self.assertRaises(ConnectionError):
++            client.request("GET", "/things")
++        self.assertEqual(len(transport.sends), 4)
++        self.assertEqual(self.delays, [0.5, 1.0, 2.0])
++
++    def test_exhausted_5xx_raises_http_error(self):
++        transport = ScriptedTransport([Response(500, "boom")])
++        client = self.make_client(transport)
++        with self.assertRaises(HTTPError) as ctx:
++            client.request("GET", "/things")
++        self.assertEqual(ctx.exception.status, 500)
++        self.assertEqual(ctx.exception.body, "boom")
++        self.assertEqual(len(transport.sends), 4)
++
++    def test_501_not_retried(self):
++        transport = ScriptedTransport([Response(501, "nope")])
++        client = self.make_client(transport)
++        with self.assertRaises(HTTPError) as ctx:
++            client.request("GET", "/things")
++        self.assertEqual(ctx.exception.status, 501)
++        self.assertEqual(len(transport.sends), 1)
++        self.assertEqual(self.delays, [])
++
++    def test_400_not_retried(self):
++        transport = ScriptedTransport([Response(400, "bad")])
++        client = self.make_client(transport)
++        with self.assertRaises(HTTPError):
++            client.request("GET", "/things")
++        self.assertEqual(len(transport.sends), 1)
++
++    def test_success_no_sleep(self):
++        transport = ScriptedTransport([Response(200, "ok")])
++        client = self.make_client(transport)
++        client.request("GET", "/things")
++        self.assertEqual(self.delays, [])
++
++
+ if __name__ == "__main__":
+     unittest.main()

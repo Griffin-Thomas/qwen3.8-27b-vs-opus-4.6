@@ -1,0 +1,89 @@
+diff --git a/__pycache__/cli.cpython-314.pyc b/__pycache__/cli.cpython-314.pyc
+new file mode 100644
+index 0000000..6a3c9d8
+Binary files /dev/null and b/__pycache__/cli.cpython-314.pyc differ
+diff --git a/__pycache__/models.cpython-314.pyc b/__pycache__/models.cpython-314.pyc
+new file mode 100644
+index 0000000..73f3a6c
+Binary files /dev/null and b/__pycache__/models.cpython-314.pyc differ
+diff --git a/__pycache__/storage.cpython-314.pyc b/__pycache__/storage.cpython-314.pyc
+new file mode 100644
+index 0000000..0b032b8
+Binary files /dev/null and b/__pycache__/storage.cpython-314.pyc differ
+diff --git a/__pycache__/test_holdout_todo.cpython-314.pyc b/__pycache__/test_holdout_todo.cpython-314.pyc
+new file mode 100644
+index 0000000..2d9c8d3
+Binary files /dev/null and b/__pycache__/test_holdout_todo.cpython-314.pyc differ
+diff --git a/__pycache__/test_todo.cpython-314.pyc b/__pycache__/test_todo.cpython-314.pyc
+new file mode 100644
+index 0000000..a55da26
+Binary files /dev/null and b/__pycache__/test_todo.cpython-314.pyc differ
+diff --git a/storage.py b/storage.py
+index b63a2e3..b58b8d7 100644
+--- a/storage.py
++++ b/storage.py
+@@ -8,16 +8,22 @@ from models import Status, Task
+ 
+ def save(tasks, path):
+     payload = [
+-        {"id": task.id, "title": task.title, "status": str(task.status)}
++        {"id": task.id, "title": task.title, "status": task.status.value}
+         for task in tasks
+     ]
+     Path(path).write_text(json.dumps(payload, indent=2))
+ 
+ 
+ def _status_from(raw):
++    if isinstance(raw, str) and raw.startswith("Status."):
++        # Legacy files written by an older version stored str(Status.X).
++        try:
++            return Status[raw.split(".", 1)[1]]
++        except KeyError:
++            return Status.PENDING
+     try:
+         return Status(raw)
+-    except ValueError:
++    except (TypeError, ValueError):
+         # Tolerate hand-edited or legacy files rather than crashing.
+         return Status.PENDING
+ 
+diff --git a/test_todo.py b/test_todo.py
+index 62f6503..69dd023 100644
+--- a/test_todo.py
++++ b/test_todo.py
+@@ -1,3 +1,5 @@
++import json
++import tempfile
+ import unittest
+ 
+ import cli
+@@ -38,6 +40,29 @@ class TestTodo(unittest.TestCase):
+     def test_load_missing_file_returns_empty(self):
+         self.assertEqual(storage.load("does-not-exist.json"), [])
+ 
++    def test_save_load_roundtrip_preserves_status(self):
++        tasks = [
++            Task(id=1, title="write report"),
++            Task(id=2, title="send report", status=Status.DONE),
++        ]
++        with tempfile.TemporaryDirectory() as tmp:
++            path = f"{tmp}/todo.json"
++            storage.save(tasks, path)
++            loaded = storage.load(path)
++        self.assertEqual([t.status for t in loaded], [Status.PENDING, Status.DONE])
++
++    def test_load_file_written_by_old_buggy_version(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            path = f"{tmp}/todo.json"
++            payload = [
++                {"id": 1, "title": "write report", "status": "Status.DONE"},
++                {"id": 2, "title": "send report", "status": "Status.PENDING"},
++            ]
++            with open(path, "w") as f:
++                json.dump(payload, f)
++            loaded = storage.load(path)
++        self.assertEqual([t.status for t in loaded], [Status.DONE, Status.PENDING])
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
