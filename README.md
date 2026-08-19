@@ -46,10 +46,16 @@ left it, wall-clock seconds, the agent's own usage report, and the diff.
   (`--dangerously-skip-permissions`), non-interactive print mode, one run per
   task per model. The prompts instruct the agents to work autonomously.
 - The tasks are offline; neither agent needs or uses web access.
-- Qwen runs at its daily-driver settings (8-bit, `REASONING_EFFORT=medium`,
-  128K context) rather than benchmark-maximum thinking budgets. Opus 4.6 runs
-  at Claude Code defaults. This intentionally compares the models as actually
-  used, not as benchmarked.
+- Effort: both models receive Claude Code's default reasoning settings for
+  that model, verified by capturing the actual request bodies. Claude Code
+  sends `thinking: adaptive` with `effort: xhigh` to the local Qwen endpoint
+  (a client override the server honours over its own `medium` default) and
+  `thinking: adaptive` with `effort: high` to `claude-opus-4-6` (`xhigh`
+  doesn't exist on Opus 4.6; `high` is its top standard tier and Claude
+  Code's default for it). Effort labels aren't calibrated across model
+  families, so "matched" here means each model runs at the level Claude Code
+  actually gives it in daily use, with the local model getting its deepest
+  reasoning tier.
 - Wall-clock for the local model includes its real prefill costs; the server
   is started once before the runs so model-load time is excluded.
 - One run per cell, so treat small differences as noise; the interesting
