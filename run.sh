@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run one agent on one task and grade it against the held-out tests.
-# Usage: ./run.sh <task> <qwen|opus>
+# Usage: ./run.sh <task> <qwen|opus-max>
 set -u
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 TASK="$1"
@@ -18,12 +18,13 @@ START="$(date +%s)"
 if [ "$MODEL" = "qwen" ]; then
   /Users/griffin/AI/qwen3.8-27b/qwen local --dangerously-skip-permissions \
     -p "$PROMPT" --output-format json > agent-output.json 2> agent-stderr.log
-else
-  EFFORT_ARGS=()
-  [ "$MODEL" = "opus-max" ] && EFFORT_ARGS=(--effort max)
+elif [ "$MODEL" = "opus-max" ]; then
   env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL -u ANTHROPIC_MODEL \
-    claude --model claude-opus-4-6 "${EFFORT_ARGS[@]}" --dangerously-skip-permissions \
+    claude --model claude-opus-4-6 --effort max --dangerously-skip-permissions \
     -p "$PROMPT" --output-format json > agent-output.json 2> agent-stderr.log
+else
+  echo "unknown model: $MODEL (use qwen or opus-max)" >&2
+  exit 2
 fi
 STATUS=$?
 END="$(date +%s)"

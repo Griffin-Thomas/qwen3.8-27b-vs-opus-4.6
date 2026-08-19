@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TASKS = ["ratelimiter", "retry", "todo-cli"]
-MODELS = ["qwen", "opus", "opus-max"]
+MODELS = ["qwen", "opus-max"]
 
 
 def last_json_line(path):
@@ -25,7 +25,7 @@ def last_json_line(path):
 
 
 def holdout_counts(path):
-    text = path.read_text()
+    text = re.sub(r"\x1b\[[0-9;]*m", "", path.read_text())
     ran = re.search(r"Ran (\d+) tests?", text)
     total = int(ran.group(1)) if ran else 0
     if re.search(r"^OK", text, re.M):

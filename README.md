@@ -53,9 +53,7 @@ left it, wall-clock seconds, the agent's own usage report, and the diff.
   `thinking: adaptive` with `effort: max` to `claude-opus-4-6` (via
   `--effort max`; Opus 4.6's ladder is low/medium/high/max). Effort labels
   aren't calibrated across model families, so "matched" means ladder-top vs
-  ladder-top. For reference, Opus 4.6 also ran the first 2 tasks at `high`
-  (Claude Code's default for it) with identical holdout results; those runs
-  are retained in the raw data.
+  ladder-top.
 - Wall-clock for the local model includes its real prefill costs; the server
   is started once before the runs so model-load time is excluded.
 - One run per cell, so treat small differences as noise; the interesting
@@ -67,8 +65,8 @@ left it, wall-clock seconds, the agent's own usage report, and the diff.
 ## Reproduce
 
 ```bash
-./run.sh ratelimiter qwen   # or: retry, todo-cli
-./run.sh ratelimiter opus
+./run.sh ratelimiter qwen       # or: retry, todo-cli
+./run.sh ratelimiter opus-max
 ```
 
 `runs/` is gitignored (working trees); graded evidence lands in `results/`.
