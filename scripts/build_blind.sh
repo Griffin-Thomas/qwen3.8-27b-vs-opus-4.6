@@ -1,0 +1,51 @@
+#!/bin/bash
+# Assemble a blinded review package: per task, the prompt, the baseline code,
+# and the two agents' diffs labelled Agent A / Agent B with a randomized
+# mapping per task. The mapping lands in results/blind-key.json, which the
+# blinded reviewer must never read. No timings, costs, or model IDs.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BLIND="$ROOT/results/blind"
+rm -rf "$BLIND"
+mkdir -p "$BLIND"
+KEY="$ROOT/results/blind-key.json"
+printf '{\n' > "$KEY"
+first=true
+
+full_diff() {
+  # Tracked changes plus files the agent added, minus run artifacts.
+  git -C "$1" add -A -- \
+    ':!agent-output.json' ':!agent-stderr.log' ':!wall-seconds.txt' \
+    ':!agent-exit-status.txt' ':!visible-tests.log' ':!holdout.log' \
+    ':!diff-stat.txt' ':!todo.json' ':!*.log' >/dev/null 2>&1
+  git -C "$1" diff --cached HEAD
+}
+
+for task in ratelimiter retry todo-cli; do
+  mkdir -p "$BLIND/$task"
+  {
+    echo "# Task: $task"
+    echo
+    echo "## Prompt given to both agents"
+    echo
+    cat "$ROOT/tasks/$task/prompt.txt"
+    echo
+    echo "## Baseline project (before either agent ran)"
+    for f in "$ROOT/tasks/$task/workspace/"*.py; do
+      echo
+      echo "### $(basename "$f")"
+      echo '```python'
+      cat "$f"
+      echo '```'
+    done
+  } > "$BLIND/$task/task.md"
+
+  if [ $((RANDOM % 2)) -eq 0 ]; then a="qwen"; b="opus-max"; else a="opus-max"; b="qwen"; fi
+  full_diff "$ROOT/runs/$task-$a" > "$BLIND/$task/agent-a.diff"
+  full_diff "$ROOT/runs/$task-$b" > "$BLIND/$task/agent-b.diff"
+  $first || printf ',\n' >> "$KEY"
+  first=false
+  printf '  "%s": {"agent-a": "%s", "agent-b": "%s"}' "$task" "$a" "$b" >> "$KEY"
+done
+printf '\n}\n' >> "$KEY"
+echo "blinded package at $BLIND (key: results/blind-key.json — do not show the reviewer)"

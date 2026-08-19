@@ -46,16 +46,16 @@ left it, wall-clock seconds, the agent's own usage report, and the diff.
   (`--dangerously-skip-permissions`), non-interactive print mode, one run per
   task per model. The prompts instruct the agents to work autonomously.
 - The tasks are offline; neither agent needs or uses web access.
-- Effort: both models receive Claude Code's default reasoning settings for
-  that model, verified by capturing the actual request bodies. Claude Code
-  sends `thinking: adaptive` with `effort: xhigh` to the local Qwen endpoint
-  (a client override the server honours over its own `medium` default) and
-  `thinking: adaptive` with `effort: high` to `claude-opus-4-6` (`xhigh`
-  doesn't exist on Opus 4.6; `high` is its top standard tier and Claude
-  Code's default for it). Effort labels aren't calibrated across model
-  families, so "matched" here means each model runs at the level Claude Code
-  actually gives it in daily use, with the local model getting its deepest
-  reasoning tier.
+- Effort: both models run at the highest effort tier their stack accepts,
+  verified by capturing the actual request bodies. Claude Code sends
+  `thinking: adaptive` with `effort: xhigh` to the local Qwen endpoint (the
+  top of the MLX server's ladder, overriding its `medium` server default) and
+  `thinking: adaptive` with `effort: max` to `claude-opus-4-6` (via
+  `--effort max`; Opus 4.6's ladder is low/medium/high/max). Effort labels
+  aren't calibrated across model families, so "matched" means ladder-top vs
+  ladder-top. For reference, Opus 4.6 also ran the first 2 tasks at `high`
+  (Claude Code's default for it) with identical holdout results; those runs
+  are retained in the raw data.
 - Wall-clock for the local model includes its real prefill costs; the server
   is started once before the runs so model-load time is excluded.
 - One run per cell, so treat small differences as noise; the interesting

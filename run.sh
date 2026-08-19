@@ -19,8 +19,10 @@ if [ "$MODEL" = "qwen" ]; then
   /Users/griffin/AI/qwen3.8-27b/qwen local --dangerously-skip-permissions \
     -p "$PROMPT" --output-format json > agent-output.json 2> agent-stderr.log
 else
+  EFFORT_ARGS=()
+  [ "$MODEL" = "opus-max" ] && EFFORT_ARGS=(--effort max)
   env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL -u ANTHROPIC_MODEL \
-    claude --model claude-opus-4-6 --dangerously-skip-permissions \
+    claude --model claude-opus-4-6 "${EFFORT_ARGS[@]}" --dangerously-skip-permissions \
     -p "$PROMPT" --output-format json > agent-output.json 2> agent-stderr.log
 fi
 STATUS=$?
