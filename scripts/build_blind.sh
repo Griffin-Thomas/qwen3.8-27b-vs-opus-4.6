@@ -5,26 +5,29 @@
 # blinded reviewer must never read. No timings, costs, or model IDs.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BLIND="$ROOT/results/blind"
+BLIND="${BLIND_DIR:-$ROOT/results/blind}"
+TASKS="${TASKS:-ratelimiter retry todo-cli}"
 rm -rf "$BLIND"
 mkdir -p "$BLIND"
-KEY="$ROOT/results/blind-key.json"
+KEY="${KEY_FILE:-$ROOT/results/blind-key.json}"
 printf '{\n' > "$KEY"
 first=true
 
 full_diff() {
   # Tracked changes plus files the agent added, minus run artifacts.
+  # Reset first so stale staging from earlier tooling can't leak in.
+  git -C "$1" reset -q HEAD -- . >/dev/null 2>&1 || true
   git -C "$1" add -A -- \
     ':!agent-output.json' ':!agent-stderr.log' ':!wall-seconds.txt' \
     ':!agent-exit-status.txt' ':!visible-tests.log' ':!holdout.log' \
     ':!diff-stat.txt' ':!todo.json' ':!*.log' \
-    ':!__pycache__' ':!*.pyc' >/dev/null 2>&1
+    ':(exclude)__pycache__' ':(exclude)*.pyc' >/dev/null 2>&1
   # The committed results/blind/ package predates the __pycache__ exclusion
   # and is kept byte-identical to what the blinded reviewer saw.
   git -C "$1" diff --cached HEAD
 }
 
-for task in ratelimiter retry todo-cli; do
+for task in $TASKS; do
   mkdir -p "$BLIND/$task"
   {
     echo "# Task: $task"
@@ -51,4 +54,4 @@ for task in ratelimiter retry todo-cli; do
   printf '  "%s": {"agent-a": "%s", "agent-b": "%s"}' "$task" "$a" "$b" >> "$KEY"
 done
 printf '\n}\n' >> "$KEY"
-echo "blinded package at $BLIND (key: results/blind-key.json — do not show the reviewer)"
+echo "blinded package at $BLIND (key: $KEY — do not show the reviewer)"
