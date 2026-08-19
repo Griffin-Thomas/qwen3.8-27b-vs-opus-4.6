@@ -1,7 +1,9 @@
 # Blinded review verdict (verbatim)
 
-Reviewer: OpenAI Codex (codex-cli, ChatGPT login), run against an isolated copy
-of results/blind/ with no access to the unblinding key, run dirs, or graders.
+Reviewer: OpenAI Codex — model `gpt-5.6-sol` at `xhigh` reasoning effort
+(codex-cli 0.147.0, ChatGPT login; model and effort confirmed by the run's
+own session banner). Run against an isolated copy of results/blind/ with no
+access to the unblinding key, run dirs, or graders.
 Labels below are the blinded per-task Agent A/B labels; the mapping is in
 results/blind-key.json.
 

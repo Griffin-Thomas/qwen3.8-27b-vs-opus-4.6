@@ -39,7 +39,8 @@ Pass/fail can't rank 2 perfect scores, and this experiment was orchestrated
 by Claude inside Claude Code, so having any Claude model judge the diffs
 would invite self-preference bias (and having Qwen judge would invite the
 mirror problem). The qualitative judging therefore went to a third model
-family with no stake in the outcome: OpenAI Codex. It reviewed blind — per
+family with no stake in the outcome: OpenAI Codex, running `gpt-5.6-sol` at
+`xhigh` reasoning effort (codex-cli 0.147.0). It reviewed blind — per
 task it saw the prompt, the baseline code, and the 2 diffs labelled Agent A
 and Agent B with per-task randomized assignment; no timings, no token
 counts, no model names. It ran against an isolated copy of the package

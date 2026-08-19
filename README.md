@@ -62,7 +62,8 @@ left it, wall-clock seconds, the agent's own usage report, and the diff.
   in Claude Code, and one of the contestants is a Claude model, so no Claude
   model judges anything here. Functional grading is mechanical (held-out
   unittest suites validated against reference fixes before any agent ran),
-  and the qualitative comparison of the diffs was done by OpenAI Codex, a
+  and the qualitative comparison of the diffs was done by OpenAI Codex
+  (`gpt-5.6-sol` at `xhigh` reasoning effort, codex-cli 0.147.0), a
   third model family with no stake in the outcome, reviewing blind
   (randomized Agent A/B labels, no timings, no model names, no access to the
   unblinding key). Asking a model to review its own family's work invites
